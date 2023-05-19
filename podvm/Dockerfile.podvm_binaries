@@ -4,13 +4,13 @@
 #
 # Builds pod vm image inside container
 #
-ARG BUILDER_IMG="quay.io/confidential-containers/podvm-builder-ubuntu"
+ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:576b534"
 
 FROM ${BUILDER_IMG} AS podvm_builder
 
 ARG CLOUD_PROVIDER
 ARG PODVM_DISTRO=ubuntu
-ARG AA_KBC=offline_fs_kbc
+ARG AA_KBC=cc_kbc_az_snp_vtpm
 # If not provided, uses system architecture
 ARG ARCH=x86_64
 ARG CAA_SRC=""
