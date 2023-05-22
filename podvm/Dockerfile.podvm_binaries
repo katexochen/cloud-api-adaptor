@@ -4,7 +4,7 @@
 #
 # Builds pod vm image inside container
 #
-ARG BUILDER_IMG="quay.io/confidential-containers/podvm-builder-ubuntu"
+ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:e22e98e"
 
 FROM ${BUILDER_IMG} AS podvm_builder
 
@@ -19,7 +19,7 @@ ARG CAA_SRC_REF=""
 ENV CLOUD_PROVIDER ${CLOUD_PROVIDER}
 ENV PODVM_DISTRO ${PODVM_DISTRO}
 ENV AA_KBC ${AA_KBC}
-ENV ARCH ${ARCH}
+# ENV ARCH ${ARCH}
 
 RUN if [ -n "${CAA_SRC}" ]; then \
       rm -rf cloud-api-adaptor && \
