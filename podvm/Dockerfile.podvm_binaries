@@ -11,6 +11,7 @@ FROM ${BUILDER_IMG} AS podvm_builder
 ARG CLOUD_PROVIDER
 ARG PODVM_DISTRO=ubuntu
 ARG AA_KBC=offline_fs_kbc
+ARG AA_VERSION=main
 # If not provided, uses system architecture
 ARG ARCH=x86_64
 ARG CAA_SRC=""
@@ -19,6 +20,7 @@ ARG CAA_SRC_REF=""
 ENV CLOUD_PROVIDER ${CLOUD_PROVIDER}
 ENV PODVM_DISTRO ${PODVM_DISTRO}
 ENV AA_KBC ${AA_KBC}
+ENV AA_VERSION ${AA_VERSION}
 # ENV ARCH ${ARCH}
 
 RUN if [ -n "${CAA_SRC}" ]; then \
