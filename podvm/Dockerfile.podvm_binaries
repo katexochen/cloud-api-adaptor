@@ -4,7 +4,7 @@
 #
 # Builds pod vm image inside container
 #
-ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:8954e0c"
+ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:8fc0b3b"
 
 FROM ${BUILDER_IMG} AS podvm_builder
 
@@ -22,6 +22,7 @@ ENV PODVM_DISTRO ${PODVM_DISTRO}
 ENV AA_KBC ${AA_KBC}
 ENV AA_VERSION ${AA_VERSION}
 # ENV ARCH ${ARCH}
+ENV LIBC=gnu
 
 RUN if [ -n "${CAA_SRC}" ]; then \
       rm -rf cloud-api-adaptor && \
