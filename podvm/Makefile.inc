@@ -128,7 +128,7 @@ $(ATTESTATION_AGENT_SRC):
 $(ATTESTATION_AGENT): $(ATTESTATION_AGENT_SRC)
 	cd "$(ATTESTATION_AGENT_SRC)" && CC= ARCH=$(ARCH) $(MAKE) KBC="$(AA_KBC)" ttrpc=true LIBC="$(LIBC)"
 	mkdir -p "$(@D)"
-	install --compare "$(ATTESTATION_AGENT_SRC)/app/target/$(RUST_TARGET)/release/attestation-agent" "$@"
+	install --compare "$(ATTESTATION_AGENT_SRC)/target/$(RUST_TARGET)/release/attestation-agent" "$@"
 
 clean_sources:
 	[ -d "$(ATTESTATION_AGENT_SRC)" ] && cd "$(ATTESTATION_AGENT_SRC)" && git clean -xfd
