@@ -4,7 +4,7 @@
 #
 # Builds pod vm image inside container
 #
-ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:e22e98e"
+ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:bb5a530"
 
 FROM ${BUILDER_IMG} AS podvm_builder
 
