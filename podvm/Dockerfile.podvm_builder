@@ -46,7 +46,7 @@ RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC
 WORKDIR /src
 
 ARG CAA_SRC="https://github.com/katexochen/cloud-api-adaptor"
-ARG CAA_SRC_REF="podvm/image-building"
+ARG CAA_SRC_REF="1b698d23b5ea474be0a52b41caac5ed9475d32a4"
 
 ARG KATA_SRC="https://github.com/kata-containers/kata-containers"
 ARG KATA_SRC_BRANCH="CCv0"
@@ -55,7 +55,10 @@ RUN echo $CAA_SRC
 
 RUN echo $CAA_SRC_REF
 
-RUN git clone ${CAA_SRC} -b ${CAA_SRC_REF} cloud-api-adaptor
+RUN git clone ${CAA_SRC} cloud-api-adaptor
+RUN cd cloud-api-adaptor && \
+    git reset --hard ${CAA_SRC_REF}
+
 RUN git clone ${KATA_SRC} -b ${KATA_SRC_BRANCH} kata-containers
 
 
