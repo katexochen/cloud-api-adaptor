@@ -86,7 +86,7 @@ STATIC_LIBSECCOMP_DIR     = $(abspath staticlib)
 STATIC_LIBSECCOMP         = $(STATIC_LIBSECCOMP_DIR)/kata-libseccomp/lib/libseccomp.a
 
 ATTESTATION_AGENT_SRC = ../../../attestation-agent
-ATTESTATION_AGENT_REPO = https://github.com/katexochen/attestation-agent
+ATTESTATION_AGENT_REPO = https://github.com/confidential-containers/attestation-agent
 
 binaries: $(BINARIES)
 
