@@ -22,6 +22,7 @@ DEB_ARCH    := $(subst x86_64,amd64,$(ARCH))
 LIBC        ?= $(if $(findstring s390x,$(ARCH)),gnu,musl)
 RUST_TARGET := $(ARCH)-unknown-linux-$(LIBC)
 AA_KBC      ?= offline_fs_kbc
+AA_TTRPC    ?= true
 KBC_URI     ?= null
 
 ifneq ($(HOST_ARCH),$(ARCH))
@@ -126,7 +127,7 @@ $(ATTESTATION_AGENT_SRC):
 	cd "$(ATTESTATION_AGENT_SRC)" && git fetch --depth=1 origin "$(AA_VERSION)" && git checkout FETCH_HEAD
 
 $(ATTESTATION_AGENT): $(ATTESTATION_AGENT_SRC)
-	cd "$(ATTESTATION_AGENT_SRC)" && CC= ARCH=$(ARCH) $(MAKE) KBC="$(AA_KBC)" ttrpc=true LIBC="$(LIBC)"
+	cd "$(ATTESTATION_AGENT_SRC)" && CC= ARCH=$(ARCH) $(MAKE) KBC="$(AA_KBC)" ttrpc="$(AA_TTRPC)" LIBC="$(LIBC)"
 	mkdir -p "$(@D)"
 	install --compare "$(ATTESTATION_AGENT_SRC)/target/$(RUST_TARGET)/release/attestation-agent" "$@"
 
