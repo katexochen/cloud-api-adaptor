@@ -5,8 +5,8 @@
 # Builds pod vm image inside container
 #
 # syntax=docker/dockerfile:1.3
-ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:8fc0b3b"
-ARG BINARIES_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-binaries-ubuntu-amd64:b040123"
+ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:3c1d2f5"
+ARG BINARIES_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-binaries-ubuntu-amd64:3c1d2f5"
 
 FROM ${BINARIES_IMG} AS podvm_binaries
 FROM ${BUILDER_IMG} AS podvm_builder
@@ -56,7 +56,7 @@ ARG GALLERY_IMAGE_VERSION=0.0.1
 ARG CACHEBUST=1
 ARG AA_VERSION=main
 ARG AA_KBC=cc_kbc_az_snp_vtpm
-ARG AA_TTRPC=false
+ENV LIBC=gnu
 
 ENV AZURE_REGION ${AZURE_REGION}
 ENV AZURE_RESOURCE_GROUP ${AZURE_RESOURCE_GROUP}
@@ -73,7 +73,7 @@ ENV PLAN_PRODUCT ${PLAN_PRODUCT}
 ENV PLAN_PUBLISHER ${PLAN_PUBLISHER}
 ENV AA_VERSION ${AA_VERSION}
 ENV AA_KBC ${AA_KBC}
-ENV AA_TTRPC ${AA_TTRPC}
+ENV LIBC ${LIBC}
 
 RUN --mount=type=secret,id=AZURE_SUBSCRIPTION_ID \
     --mount=type=secret,id=AZURE_CLIENT_ID \

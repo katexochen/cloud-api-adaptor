@@ -10,6 +10,7 @@ FROM ubuntu:22.04
 ARG GO_VERSION="1.19.6"
 ARG PROTOC_VERSION="3.11.4"
 ARG RUST_VERSION="1.66.0"
+ARG CACHEBUST=1
 
 # Without setting ENV gh-action is failing to use the correct values
 ENV GO_VERSION ${GO_VERSION}
@@ -46,7 +47,7 @@ RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC
 WORKDIR /src
 
 ARG CAA_SRC="https://github.com/katexochen/cloud-api-adaptor"
-ARG CAA_SRC_REF="d09d4d10d107dd94cb1043d8ddd377eb85608080"
+ARG CAA_SRC_REF="podvm/image-building"
 
 ARG KATA_SRC="https://github.com/kata-containers/kata-containers"
 ARG KATA_SRC_BRANCH="CCv0"
@@ -57,7 +58,8 @@ RUN echo $CAA_SRC_REF
 
 RUN git clone ${CAA_SRC} cloud-api-adaptor
 RUN cd cloud-api-adaptor && \
-    git reset --hard ${CAA_SRC_REF}
+    git checkout ${CAA_SRC_REF} && \
+    echo "${CACHEBUST}"
 
 RUN git clone ${KATA_SRC} -b ${KATA_SRC_BRANCH} kata-containers
 
