@@ -4,15 +4,14 @@
 #
 # Builds pod vm image inside container
 #
-ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:3c1d2f5"
+ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:9fdf16b"
 
 FROM ${BUILDER_IMG} AS podvm_builder
 
 ARG CLOUD_PROVIDER
 ARG PODVM_DISTRO=ubuntu
-ARG AA_KBC=offline_fs_kbc
-ARG AA_TTRPC=false
-ARG AA_VERSION=main
+ARG AA_VERSION="fix/pubkey-encoding"
+ARG ATTESTATION_AGENT_REPO="https://github.com/katexochen/attestation-agent"
 # If not provided, uses system architecture
 ARG ARCH=x86_64
 ARG CAA_SRC=""
@@ -20,9 +19,8 @@ ARG CAA_SRC_REF=""
 
 ENV CLOUD_PROVIDER ${CLOUD_PROVIDER}
 ENV PODVM_DISTRO ${PODVM_DISTRO}
-ENV AA_KBC ${AA_KBC}
-ENV AA_TTRPC ${AA_TTRPC}
 ENV AA_VERSION ${AA_VERSION}
+ENV ATTESTATION_AGENT_REPO ${ATTESTATION_AGENT_REPO}
 # ENV ARCH ${ARCH}
 ENV LIBC=gnu
 
@@ -38,6 +36,14 @@ RUN if [ -n "${CAA_SRC}" ]; then \
 # Installs add-ons for foreign target, if required
 RUN ./cloud-api-adaptor/podvm/hack/cross-build-extras.sh
 
+ENV AA_KBC "cc_kbc_az_snp_vtpm"
+ENV AA_TTRPC "false"
+RUN cd cloud-api-adaptor/podvm && \
+    BINARIES= make binaries
+RUN mv /src/cloud-api-adaptor/podvm/files/usr/local/bin/attestation-agent /src/cloud-api-adaptor/podvm/files/usr/local/bin/attestation-agent-vtpm
+
+ENV AA_KBC "offline_fs_kbc"
+ENV AA_TTRPC "true"
 RUN cd cloud-api-adaptor/podvm && \
      make binaries
 

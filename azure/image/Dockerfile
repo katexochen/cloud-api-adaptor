@@ -5,8 +5,8 @@
 # Builds pod vm image inside container
 #
 # syntax=docker/dockerfile:1.3
-ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:3c1d2f5"
-ARG BINARIES_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-binaries-ubuntu-amd64:3c1d2f5"
+ARG BUILDER_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-builder-ubuntu:9fdf16b"
+ARG BINARIES_IMG="ghcr.io/katexochen/cloud-api-adaptor/podvm-binaries-ubuntu-amd64:9fdf16b"
 
 FROM ${BINARIES_IMG} AS podvm_binaries
 FROM ${BUILDER_IMG} AS podvm_builder
