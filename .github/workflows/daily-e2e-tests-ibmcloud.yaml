@@ -13,8 +13,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  daily-e2e-tests:
-    name: e2e tests
+  daily-e2e-ibmcloud:
+    name: e2e tests IBM Cloud
+    if: !github.event.pull_request.head.repo.fork
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

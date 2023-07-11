@@ -1,6 +1,14 @@
 # (C) Copyright Confidential Containers Contributors
 # SPDX-License-Identifier: Apache-2.0
 
+# Build and push the golang-fedora container image to a container registry.
+# The image is used as builder base in docker builds.
+#
+# Fork:
+# You can run this workflow on your fork by using the workflow_dispatch
+# trigger and specifying the registry and image name. You need to have
+# QUAY_USERNAME and QUAY_PASSWORD secret set if you want to push to quay.io.
+# GITHUB_TOKEN for ghcr.io is automatically set by GitHub.
 name: "build golang-fedora container image"
 
 on:
@@ -27,6 +35,10 @@ on:
 
 jobs:
   build:
+    # Disables the push trigger for forks.
+    if: |
+      github.repository == 'confidential-containers/cloud-api-adaptor' ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
