@@ -12,7 +12,7 @@ ARG CLOUD_PROVIDER
 ARG PODVM_DISTRO=ubuntu
 ARG GUEST_COMPONENTS_VERSION="af35c0649bab2d000b5c350bc5e60db67ef9e1a5"
 ARG GUEST_COMPONENTS_REPO="https://github.com/confidential-containers/guest-components"
-ARG AA_KBC=offline_fs_kbc
+ARG AA_KBC=offline_fs_kbc,cc_kbc
 # If not provided, uses system architecture
 ARG ARCH=x86_64
 ARG CAA_SRC=""

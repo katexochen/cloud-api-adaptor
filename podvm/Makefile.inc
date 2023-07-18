@@ -18,7 +18,7 @@ HOST_ARCH   := $(shell uname -m)
 ARCH        ?= $(HOST_ARCH)
 # Normalise x86_64 / amd64 for input ARCH
 DEB_ARCH    := $(subst x86_64,amd64,$(ARCH))
-AA_KBC      ?= offline_fs_kbc
+AA_KBC      ?= offline_fs_kbc,cc_kbc
 KBC_URI     ?= null
 LIBC        := gnu
 RUST_ARCH   ?= $(subst ppc64le,powerpc64le,$(ARCH))
