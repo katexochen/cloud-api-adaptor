@@ -40,7 +40,7 @@ RUN if [ -n "${CAA_SRC}" ]; then \
 # Installs add-ons for foreign target, if required
 RUN ./cloud-api-adaptor/podvm/hack/cross-build-extras.sh
 
-ENV AA_KBC "cc_kbc_az_snp_vtpm"
+ENV AA_KBC "cc_kbc"
 ENV AA_TTRPC "false"
 RUN cd cloud-api-adaptor/podvm && \
     BINARIES= make binaries
