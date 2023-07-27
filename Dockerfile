@@ -3,7 +3,7 @@ ARG BUILDER_BASE=quay.io/confidential-containers/golang-fedora:1.20.6-36
 ARG BASE=fedora:36
 
 
-FROM --platform=$TARGETPLATFORM $BUILDER_BASE as builder-release
+FROM --platform=$BUILDPLATFORM $BUILDER_BASE as builder-release
 
 FROM builder-release as builder-dev
 RUN dnf install -y libvirt-devel && dnf clean all
