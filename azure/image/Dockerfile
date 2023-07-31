@@ -52,7 +52,7 @@ ARG PLAN_NAME
 ARG PLAN_PRODUCT
 ARG PLAN_PUBLISHER
 ARG GALLERY_IMAGE_VERSION=0.0.1
-ARG GUEST_COMPONENTS_REPO=github.com/confidential-containers/guest-components
+ARG GUEST_COMPONENTS_REPO=https://github.com/confidential-containers/guest-components
 ARG GUEST_COMPONENTS_VERSION=main
 ARG AA_KBC=offline_fs_kbc
 ENV LIBC=gnu
