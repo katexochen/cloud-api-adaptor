@@ -10,15 +10,6 @@ include $(SELF_DIR)Makefile.inc
 
 IMAGE_SUFFIX := .qcow2
 PODVM_DISTRO ?= ubuntu
-IMAGE_URL := $(or $(IMAGE_URL),$($(PODVM_DISTRO)_$(DEB_ARCH)_IMAGE_URL))
-IMAGE_CHECKSUM := $(or $(IMAGE_CHECKSUM),$($(PODVM_DISTRO)_$(DEB_ARCH)_IMAGE_CHECKSUM))
-
-ifndef IMAGE_URL
-$(error "IMAGE_URL is not defined")
-endif
-ifndef IMAGE_CHECKSUM
-$(error "IMAGE_CHECKSUM is not defined")
-endif
 
 KATA_AGENT_SRC := ../../kata-containers/src/agent
 STATIC_LIBSECCOMP_BUILDER := ../../kata-containers/ci/install_libseccomp.sh
@@ -30,11 +21,6 @@ UEFI ?= false
 UEFI_FIRMWARE_LOCATION ?=
 
 SE_BOOT ?= 0
-
-# Env variable for default qemu builder options across distros/arch
-PACKER_DEFAULT_OPTS ?= -var qemu_image_name=${IMAGE_FILE} \
-	-var cloud_image_url=${IMAGE_URL} \
-	-var cloud_image_checksum=${IMAGE_CHECKSUM}
 
 image: $(IMAGE_FILE)
 
