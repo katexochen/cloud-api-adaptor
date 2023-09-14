@@ -31,7 +31,7 @@ git:
     reference: main
   umoci:
     url: https://github.com/opencontainers/umoci
-    reference: v0.4.7
+    reference: main
   skopeo:
     url: https://github.com/containers/skopeo
     reference: v1.5.0
