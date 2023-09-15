@@ -1,0 +1,9 @@
+build
+.mkosi*
+mkosi.cache/*
+!mkosi.cache/.gitkeep
+mkosi.workspace/*
+!mkosi.workspace/.gitkeep
+
+resources/ubuntu/binaries-tree
+resources/fedora/binaries-tree
