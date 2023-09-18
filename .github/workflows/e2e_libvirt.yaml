@@ -20,6 +20,26 @@ on:
         description: Git ref to checkout the cloud-api-adaptor repository. Defaults to main.
         required: false
         type: string
+  workflow_dispatch:
+    inputs:
+      qcow2_artifact:
+        required: true
+        type: string
+      wormhole_id:
+        description:
+        default: ''
+        required: false
+        type: string
+      install_directory_artifact:
+        description: The archive name of the install directory
+        default: ''
+        required: false
+        type: string
+      git_ref:
+        default: 'main'
+        description: Git ref to checkout the cloud-api-adaptor repository. Defaults to main.
+        required: false
+        type: string
 
 env:
   CLOUD_PROVIDER: libvirt
@@ -47,9 +67,17 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - uses: actions/download-artifact@v3
+        if: ${{ inputs.wormhole_id == '' }}
         with:
           name: ${{ inputs.qcow2_artifact }}
           path: podvm
+
+      - name: Download image via magic wormhole
+        if: ${{ inputs.wormhole_id != '' }}
+        run: |
+          sudo apt-get install -y magic-wormhole
+          cd podvm
+          magic-wormhole receive ${{ inputs.wormhole_id }} --accept-file
 
       - name: Get the install directory
         if: ${{ inputs.install_directory_artifact != '' }}
