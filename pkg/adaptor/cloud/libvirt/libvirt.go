@@ -73,7 +73,6 @@ func createCloudInitISO(v *vmConfig) ([]byte, error) {
 }
 
 func checkDomainExistsByName(name string, libvirtClient *libvirtClient) (exist bool, err error) {
-
 	logger.Printf("Checking if instance (%s) exists", name)
 	domain, err := libvirtClient.connection.LookupDomainByName(name)
 	if err != nil {
@@ -85,11 +84,9 @@ func checkDomainExistsByName(name string, libvirtClient *libvirtClient) (exist b
 	defer freeDomain(domain, &err)
 
 	return true, nil
-
 }
 
 func checkDomainExistsById(id uint32, libvirtClient *libvirtClient) (exist bool, err error) {
-
 	logger.Printf("Checking if instance (%d) exists", id)
 	domain, err := libvirtClient.connection.LookupDomainById(id)
 	if err != nil {
@@ -101,11 +98,9 @@ func checkDomainExistsById(id uint32, libvirtClient *libvirtClient) (exist bool,
 	defer freeDomain(domain, &err)
 
 	return true, nil
-
 }
 
 func uploadIso(isoData []byte, isoVolName string, libvirtClient *libvirtClient) (string, error) {
-
 	logger.Printf("Uploading iso file: %s\n", isoVolName)
 	volumeDef := newDefVolume(isoVolName)
 
@@ -124,7 +119,6 @@ func uploadIso(isoData []byte, isoVolName string, libvirtClient *libvirtClient) 
 	volumeDef.Target.Format.Type = "raw"
 
 	return uploadVolume(libvirtClient, volumeDef, img)
-
 }
 
 func getGuestForArchType(caps *libvirtxml.Caps, arch string, ostype string) (*libvirtxml.CapsGuest, error) {
@@ -161,7 +155,6 @@ func GetDomainCapabilities(conn *libvirt.Connect, emulatorbin string, arch strin
 	err = xml.Unmarshal([]byte(capsXML), caps)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal domain capabilities, cause: %w", err)
-
 	}
 	return caps, nil
 }
@@ -203,7 +196,6 @@ func getCanonicalMachineName(caps *libvirtxml.Caps, arch string, virttype string
 }
 
 func createDomainXMLs390x(client *libvirtClient, cfg *domainConfig, vm *vmConfig) (*libvirtxml.Domain, error) {
-
 	guest, err := getGuestForArchType(client.caps, archS390x, typeHardwareVirtualMachine)
 	if err != nil {
 		return nil, err
@@ -324,7 +316,6 @@ func createDomainXMLs390x(client *libvirtClient, cfg *domainConfig, vm *vmConfig
 }
 
 func createDomainXMLx86_64(client *libvirtClient, cfg *domainConfig, vm *vmConfig) (*libvirtxml.Domain, error) {
-
 	var diskControllerAddr uint = 0
 	domain := &libvirtxml.Domain{
 		Type:        "kvm",
@@ -333,7 +324,11 @@ func createDomainXMLx86_64(client *libvirtClient, cfg *domainConfig, vm *vmConfi
 		Memory:      &libvirtxml.DomainMemory{Value: cfg.mem, Unit: "GiB", DumpCore: "on"},
 		VCPU:        &libvirtxml.DomainVCPU{Value: cfg.cpu},
 		OS: &libvirtxml.DomainOS{
-			Type: &libvirtxml.DomainOSType{Arch: "x86_64", Type: typeHardwareVirtualMachine},
+			Type: &libvirtxml.DomainOSType{
+				Arch:    "x86_64",
+				Type:    typeHardwareVirtualMachine,
+				Machine: "q35",
+			},
 		},
 		// For Hot-Plug Feature.
 		Features: &libvirtxml.DomainFeatureList{
@@ -351,13 +346,18 @@ func createDomainXMLx86_64(client *libvirtClient, cfg *domainConfig, vm *vmConfi
 					Driver: &libvirtxml.DomainDiskDriver{Type: "qcow2"},
 					Source: &libvirtxml.DomainDiskSource{
 						File: &libvirtxml.DomainDiskSourceFile{
-							File: cfg.bootDisk}},
+							File: cfg.bootDisk,
+						},
+					},
 					Target: &libvirtxml.DomainDiskTarget{
-						Dev: "sda", Bus: "sata"},
+						Dev: "sda", Bus: "sata",
+					},
 					Boot: &libvirtxml.DomainDeviceBoot{Order: 1},
 					Address: &libvirtxml.DomainAddress{
 						Drive: &libvirtxml.DomainAddressDrive{
-							Controller: &diskControllerAddr, Bus: &diskControllerAddr, Target: &diskControllerAddr, Unit: &diskControllerAddr}},
+							Controller: &diskControllerAddr, Bus: &diskControllerAddr, Target: &diskControllerAddr, Unit: &diskControllerAddr,
+						},
+					},
 				},
 				{
 					Device: "cdrom",
@@ -369,7 +369,9 @@ func createDomainXMLx86_64(client *libvirtClient, cfg *domainConfig, vm *vmConfi
 					ReadOnly: &libvirtxml.DomainDiskReadOnly{},
 					Address: &libvirtxml.DomainAddress{
 						Drive: &libvirtxml.DomainAddressDrive{
-							Controller: &diskControllerAddr, Bus: &diskControllerAddr, Target: &diskControllerAddr, Unit: &diskControllerAddr}},
+							Controller: &diskControllerAddr, Bus: &diskControllerAddr, Target: &diskControllerAddr, Unit: &diskControllerAddr,
+						},
+					},
 				},
 			},
 			// Network Interfaces.
@@ -390,17 +392,54 @@ func createDomainXMLx86_64(client *libvirtClient, cfg *domainConfig, vm *vmConfi
 
 	switch l := vm.launchSecurityType; l {
 	case NoLaunchSecurity:
-		return domain, nil
+		return enableUEFI(client, cfg, vm, domain)
 	case SEV:
 		return enableSEV(client, cfg, vm, domain)
 	default:
 		return nil, fmt.Errorf("launch Security type is not supported for this domain: %s", l)
 	}
+}
 
+func enableUEFI(client *libvirtClient, cfg *domainConfig, vm *vmConfig, domain *libvirtxml.Domain) (*libvirtxml.Domain, error) {
+	domain.OS.Type.Machine = "q35"
+	domain.OS.Loader = &libvirtxml.DomainLoader{
+		Path:      vm.firmware,
+		Readonly:  "yes",
+		Stateless: "yes",
+		Type:      "pflash",
+	}
+	// 	nvramPath := fmt.Sprintf("/var/lib/libvirt/qemu/nvram/%s_VARS.fd", cfg.name)
+	// domain.OS.NVRam = &libvirtxml.DomainNVRam{NVRam: nvramPath}
+
+	// IDE controllers are unsupported for q35 machines.
+	cidataDiskIndex := 1
+	var cidataDiskAddr uint = 1
+	domain.Devices.Disks[cidataDiskIndex].Target.Bus = "sata"
+	domain.Devices.Disks[cidataDiskIndex].Target.Dev = "sdb"
+	domain.Devices.Disks[cidataDiskIndex].Address.Drive.Unit = &cidataDiskAddr
+
+	// Devices with type virtio must have IOMMU turned on
+	for devInterfaceNum := range domain.Devices.Interfaces {
+		deviceInterface := domain.Devices.Interfaces[devInterfaceNum]
+		if deviceInterface.Model.Type == "virtio" {
+			if deviceInterface.Source.Network != nil {
+				// Disable ROM for virtio-nets
+				domain.Devices.Interfaces[devInterfaceNum].ROM = &libvirtxml.DomainROM{Enabled: "no"}
+			}
+			domain.Devices.Interfaces[devInterfaceNum].Driver = &libvirtxml.DomainInterfaceDriver{IOMMU: "on"}
+		}
+	}
+	for devControllerNum := range domain.Devices.Controllers {
+		if domain.Devices.Controllers[devControllerNum].Type == "virtio" {
+			domain.Devices.Controllers[devControllerNum].Driver = &libvirtxml.DomainControllerDriver{IOMMU: "on"}
+		}
+	}
+	domain.Devices.MemBalloon = &libvirtxml.DomainMemBalloon{Model: "virtio", Driver: &libvirtxml.DomainMemBalloonDriver{IOMMU: "on"}}
+
+	return domain, nil
 }
 
 func enableSEV(client *libvirtClient, cfg *domainConfig, vm *vmConfig, domain *libvirtxml.Domain) (*libvirtxml.Domain, error) {
-
 	if vm.launchSecurityType != SEV {
 		return nil, fmt.Errorf("launch Security must be set as SEV to enable SEV")
 	}
@@ -528,7 +567,6 @@ func getDomainIPs(dom *libvirt.Domain) ([]netip.Addr, error) {
 }
 
 func CreateDomain(ctx context.Context, libvirtClient *libvirtClient, v *vmConfig) (result *createDomainOutput, err error) {
-
 	v.cpu = uint(2)
 	v.mem = uint(8)
 	v.rootDiskSize = uint64(10)
@@ -645,7 +683,6 @@ func CreateDomain(ctx context.Context, libvirtClient *libvirtClient, v *vmConfig
 }
 
 func DeleteDomain(ctx context.Context, libvirtClient *libvirtClient, id string) (err error) {
-
 	logger.Printf("Deleting instance (%s)", id)
 	idUint, _ := strconv.ParseUint(id, 10, 64)
 	// libvirt API takes uint32
@@ -726,7 +763,6 @@ func DeleteDomain(ctx context.Context, libvirtClient *libvirtClient, id string) 
 }
 
 func NewLibvirtClient(libvirtCfg Config) (*libvirtClient, error) {
-
 	// Define Domain via XML created before.
 	conn, err := libvirt.NewConnect(libvirtCfg.URI)
 	if err != nil {

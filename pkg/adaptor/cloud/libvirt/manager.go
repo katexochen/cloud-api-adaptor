@@ -22,7 +22,7 @@ const (
 	defaultDataDir        = "/var/lib/libvirt/images"
 	defaultVolName        = "podvm-base.qcow2"
 	defaultLaunchSecurity = ""
-	defaultFirmware       = "/usr/share/edk2/ovmf/OVMF_CODE.fd"
+	defaultFirmware       = "/usr/share/OVMF/OVMF_CODE.fd"
 )
 
 func (*Manager) ParseCmd(flags *flag.FlagSet) {
@@ -44,6 +44,7 @@ func (*Manager) LoadEnv() {
 	cloud.DefaultToEnv(&libvirtcfg.VolName, "LIBVIRT_VOL_NAME", defaultVolName)
 	cloud.DefaultToEnv(&libvirtcfg.LaunchSecurity, "LIBVIRT_LAUNCH_SECURITY", defaultLaunchSecurity)
 	cloud.DefaultToEnv(&libvirtcfg.Firmware, "LIBVIRT_FIRMWARE", defaultFirmware)
+	println("katexochen firmware: ", libvirtcfg.Firmware)
 }
 
 func (*Manager) NewProvider() (cloud.Provider, error) {
