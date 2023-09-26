@@ -5,5 +5,4 @@ mkosi.cache/*
 mkosi.workspace/*
 !mkosi.workspace/.gitkeep
 
-resources/ubuntu/binaries-tree
-resources/fedora/binaries-tree
+resources/binaries-tree
