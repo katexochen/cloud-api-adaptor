@@ -1,4 +1,4 @@
-module github.com/confidential-containers/cloud-api-adaptor/hack/image-uploader
+module github.com/confidential-containers/cloud-api-adaptor/hack/upload-image
 
 go 1.20
 
@@ -8,7 +8,6 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 v5.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.1.0
 	github.com/spf13/cobra v1.7.0
-	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

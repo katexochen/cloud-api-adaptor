@@ -3,28 +3,25 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"path"
 	"time"
 
-	"github.com/confidential-containers/cloud-api-adaptor/hack/image-uploader/azure"
-	"github.com/confidential-containers/cloud-api-adaptor/hack/image-uploader/uploader"
+	"github.com/confidential-containers/cloud-api-adaptor/hack/upload-image/azure"
+	"github.com/confidential-containers/cloud-api-adaptor/hack/upload-image/uploader"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const (
-	configName      = "image-uploader.yml"
-	configDir       = "image-uploader.targets"
+	configName      = "upload-image.yml"
 	timestampFormat = "20060102150405"
 )
 
 func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:              "image-uploader",
-		Short:            "image-uploader is a tool for uploading images to a cloud provider",
+		Use:              "upload-image",
+		Short:            "upload-image is a tool for uploading images to a cloud provider",
 		PersistentPreRun: preRunRoot,
 		RunE:             run,
 		Args:             cobra.MatchAll(cobra.ExactArgs(2), isCSP(0)),
@@ -49,28 +46,13 @@ func run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("decoding config file: %w", err)
 	}
 
-	var providerConfig, providerOverwrite io.ReadCloser
-	providerConfig, err = os.Open(path.Join(configDir, args[0]+".yml"))
-	if err != nil {
-		return fmt.Errorf("opening config file: %w", err)
-	}
-	defer providerConfig.Close()
-	if overwrite, err := os.Open(path.Join(configDir, args[0]+".overwrite.yml")); err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("opening override config file: %w", err)
-		}
-	} else {
-		providerOverwrite = overwrite
-		defer providerOverwrite.Close()
-	}
-
 	var prepper Prepper
 	var upload Uploader
 
 	switch provider {
 	case "azure":
 		prepper = &azure.Prepper{}
-		upload, err = azure.NewUploader(providerConfig, providerOverwrite, logger)
+		upload, err = azure.NewUploader(config, logger)
 		if err != nil {
 			return fmt.Errorf("creating azure uploader: %w", err)
 		}
@@ -84,11 +66,16 @@ func run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("opening image: %w", err)
 	}
+	defer image.Close()
+	imageFi, err := image.Stat()
+	if err != nil {
+		return fmt.Errorf("getting image stats: %w", err)
+	}
 
 	req := &uploader.Request{
-		Config:    config,
 		Image:     image,
 		Timestamp: time.Now().UTC().Format(timestampFormat),
+		Size:      imageFi.Size(),
 	}
 	ref, err := upload.Upload(cmd.Context(), req)
 	if err != nil {

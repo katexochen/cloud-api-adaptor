@@ -19,6 +19,7 @@ cluster-provisioner
 confidential-data-hub
 kata-agent
 process-user-data
+upload-image
 
 # The code files under cmd are not ignored
 !/cmd/*
@@ -32,6 +33,8 @@ podvm/files/etc/certificates/*
 # Files
 vcenter.auto.pkrvars.hcl
 settings.auto.pkrvars.hcl
+upload-image.yml
 *.qcow2
 .git-commit
 .git-commit.tmp
+*.tar.gz

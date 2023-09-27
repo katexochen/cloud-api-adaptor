@@ -1,3 +1,9 @@
+/*
+Copyright (c) Edgeless Systems GmbH
+Copyright (c) Confidential Containers Contributors
+
+SPDX-License-Identifier: Apache-2.0
+*/
 package azure
 
 import (
@@ -15,8 +21,7 @@ import (
 	armcomputev5 "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/pageblob"
-	"github.com/confidential-containers/cloud-api-adaptor/hack/image-uploader/uploader"
-	"gopkg.in/yaml.v3"
+	"github.com/confidential-containers/cloud-api-adaptor/hack/upload-image/uploader"
 )
 
 const (
@@ -28,7 +33,7 @@ const (
 
 // Uploader can upload and remove os images on Azure.
 type Uploader struct {
-	config           *Config
+	config           uploader.Config
 	pollingFrequency time.Duration
 
 	disks             azureDiskAPI
@@ -43,41 +48,34 @@ type Uploader struct {
 }
 
 // NewUploader creates a new Uploader.
-func NewUploader(configReader, configOverwrite io.Reader, log *log.Logger) (*Uploader, error) {
-	config, err := parseConfig(configReader, &Config{})
-	if err != nil {
-		return nil, fmt.Errorf("parsing config: %w", err)
-	}
-	config, err = parseConfig(configOverwrite, config)
-	if err != nil {
-		return nil, fmt.Errorf("parsing overwrite config: %w", err)
-	}
+func NewUploader(config uploader.Config, log *log.Logger) (*Uploader, error) {
+	subscriptionID := config.Azure.SubscriptionID
 
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, err
 	}
-	diskClient, err := armcomputev5.NewDisksClient(config.SubscriptionID, cred, nil)
+	diskClient, err := armcomputev5.NewDisksClient(subscriptionID, cred, nil)
 	if err != nil {
 		return nil, err
 	}
-	managedImagesClient, err := armcomputev5.NewImagesClient(config.SubscriptionID, cred, nil)
+	managedImagesClient, err := armcomputev5.NewImagesClient(subscriptionID, cred, nil)
 	if err != nil {
 		return nil, err
 	}
-	galleriesClient, err := armcomputev5.NewGalleriesClient(config.SubscriptionID, cred, nil)
+	galleriesClient, err := armcomputev5.NewGalleriesClient(subscriptionID, cred, nil)
 	if err != nil {
 		return nil, err
 	}
-	galleriesImageClient, err := armcomputev5.NewGalleryImagesClient(config.SubscriptionID, cred, nil)
+	galleriesImageClient, err := armcomputev5.NewGalleryImagesClient(subscriptionID, cred, nil)
 	if err != nil {
 		return nil, err
 	}
-	galleriesImageVersionClient, err := armcomputev5.NewGalleryImageVersionsClient(config.SubscriptionID, cred, nil)
+	galleriesImageVersionClient, err := armcomputev5.NewGalleryImageVersionsClient(subscriptionID, cred, nil)
 	if err != nil {
 		return nil, err
 	}
-	communityImageVersionClient, err := armcomputev5.NewCommunityGalleryImageVersionsClient(config.SubscriptionID, cred, nil)
+	communityImageVersionClient, err := armcomputev5.NewCommunityGalleryImageVersionsClient(subscriptionID, cred, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -96,19 +94,6 @@ func NewUploader(configReader, configOverwrite io.Reader, log *log.Logger) (*Upl
 		communityVersions: communityImageVersionClient,
 		log:               log,
 	}, nil
-}
-
-func parseConfig(r io.Reader, config *Config) (*Config, error) {
-	if r == nil {
-		return config, nil
-	}
-	if config == nil {
-		return nil, errors.New("config must not be nil")
-	}
-	if err := yaml.NewDecoder(r).Decode(config); err != nil {
-		return nil, err
-	}
-	return config, nil
 }
 
 // Upload uploads an OS image to Azure.
@@ -161,8 +146,8 @@ func (u *Uploader) Upload(ctx context.Context, req *uploader.Request) (ref strin
 
 // createDisk creates and initializes (uploads contents of) an azure disk.
 func (u *Uploader) createDisk(ctx context.Context, diskType DiskType, img io.ReadSeeker, vmgs io.ReadSeeker, size int64) (string, error) {
-	rg := u.config.ResourceGroup
-	diskName := u.config.DiskName
+	rg := u.config.Azure.ResourceGroup
+	diskName := u.config.Azure.DiskName
 
 	u.log.Printf("Creating disk %s in %s", diskName, rg)
 	if diskType == DiskTypeWithVMGS && vmgs == nil {
@@ -179,7 +164,7 @@ func (u *Uploader) createDisk(ctx context.Context, diskType DiskType, img io.Rea
 	}
 
 	disk := armcomputev5.Disk{
-		Location: &u.config.Location,
+		Location: &u.config.Azure.Location,
 		Properties: &armcomputev5.DiskProperties{
 			CreationData: &armcomputev5.CreationData{
 				CreateOption:    &createOption,
@@ -254,8 +239,8 @@ func (u *Uploader) createDisk(ctx context.Context, diskType DiskType, img io.Rea
 }
 
 func (u *Uploader) ensureDiskDeleted(ctx context.Context) error {
-	rg := u.config.ResourceGroup
-	diskName := u.config.DiskName
+	rg := u.config.Azure.ResourceGroup
+	diskName := u.config.Azure.DiskName
 
 	getOpts := &armcomputev5.DisksClientGetOptions{}
 	if _, err := u.disks.Get(ctx, rg, diskName, getOpts); err != nil {
@@ -277,9 +262,9 @@ func (u *Uploader) ensureDiskDeleted(ctx context.Context) error {
 }
 
 func (u *Uploader) createManagedImage(ctx context.Context, diskID string) (string, error) {
-	rg := u.config.ResourceGroup
-	location := u.config.Location
-	imgName := u.config.ImageDefinitionName
+	rg := u.config.Azure.ResourceGroup
+	location := u.config.Azure.Location
+	imgName := u.config.Azure.ImageDefinitionName
 
 	u.log.Printf("Creating managed image %s in %s", imgName, rg)
 	image := armcomputev5.Image{
@@ -315,8 +300,8 @@ func (u *Uploader) createManagedImage(ctx context.Context, diskID string) (strin
 }
 
 func (u *Uploader) ensureManagedImageDeleted(ctx context.Context) error {
-	rg := u.config.ResourceGroup
-	diskName := u.config.DiskName
+	rg := u.config.Azure.ResourceGroup
+	diskName := u.config.Azure.DiskName
 
 	getOpts := &armcomputev5.ImagesClientGetOptions{}
 	if _, err := u.managedImages.Get(ctx, rg, diskName, getOpts); err != nil {
@@ -339,8 +324,8 @@ func (u *Uploader) ensureManagedImageDeleted(ctx context.Context) error {
 
 // ensureSIG creates a SIG if it does not exist yet.
 func (u *Uploader) ensureSIG(ctx context.Context) error {
-	rg := u.config.ResourceGroup
-	sigName := u.config.SharedImageGalleryName
+	rg := u.config.Azure.ResourceGroup
+	sigName := u.config.Azure.SharedImageGalleryName
 
 	_, err := u.galleries.Get(ctx, rg, sigName, &armcomputev5.GalleriesClientGetOptions{})
 	if err == nil {
@@ -349,7 +334,7 @@ func (u *Uploader) ensureSIG(ctx context.Context) error {
 	}
 	u.log.Printf("Creating image gallery %s in %s", sigName, rg)
 	gallery := armcomputev5.Gallery{
-		Location: &u.config.Location,
+		Location: &u.config.Azure.Location,
 	}
 	createPoller, err := u.galleries.BeginCreateOrUpdate(ctx, rg, sigName, gallery,
 		&armcomputev5.GalleriesClientBeginCreateOrUpdateOptions{},
@@ -365,10 +350,10 @@ func (u *Uploader) ensureSIG(ctx context.Context) error {
 
 // ensureImageDefinition creates an image definition (component of a SIG) if it does not exist yet.
 func (u *Uploader) ensureImageDefinition(ctx context.Context) error {
-	rg := u.config.ResourceGroup
-	sigName := u.config.SharedImageGalleryName
-	defName := u.config.ImageDefinitionName
-	attestVariant := u.config.AttestationVariant
+	rg := u.config.Azure.ResourceGroup
+	sigName := u.config.Azure.SharedImageGalleryName
+	defName := u.config.Azure.ImageDefinitionName
+	attestVariant := u.config.Azure.AttestationVariant
 
 	_, err := u.image.Get(ctx, rg, sigName, defName, &armcomputev5.GalleryImagesClientGetOptions{})
 	if err == nil {
@@ -389,12 +374,12 @@ func (u *Uploader) ensureImageDefinition(ctx context.Context) error {
 	}
 
 	galleryImage := armcomputev5.GalleryImage{
-		Location: &u.config.Location,
+		Location: &u.config.Azure.Location,
 		Properties: &armcomputev5.GalleryImageProperties{
 			Identifier: &armcomputev5.GalleryImageIdentifier{
-				Offer:     &u.config.ImageOffer,
-				Publisher: &u.config.ImagePublisher,
-				SKU:       &u.config.ImageSKU,
+				Offer:     &u.config.Azure.ImageOffer,
+				Publisher: &u.config.Azure.ImagePublisher,
+				SKU:       &u.config.Azure.ImageSKU,
 			},
 			OSState:      toPtr(armcomputev5.OperatingSystemStateTypesGeneralized),
 			OSType:       toPtr(armcomputev5.OperatingSystemTypesLinux),
@@ -418,14 +403,14 @@ func (u *Uploader) ensureImageDefinition(ctx context.Context) error {
 }
 
 func (u *Uploader) createImageVersion(ctx context.Context, imageID string) (string, error) {
-	rg := u.config.ResourceGroup
-	sigName := u.config.SharedImageGalleryName
-	defName := u.config.ImageDefinitionName
-	verName := u.config.ImageVersionName
+	rg := u.config.Azure.ResourceGroup
+	sigName := u.config.Azure.SharedImageGalleryName
+	defName := u.config.Azure.ImageDefinitionName
+	verName := u.config.Azure.ImageVersionName
 
 	u.log.Printf("Creating image version %s/%s/%s in %s", sigName, defName, verName, rg)
 	imageVersion := armcomputev5.GalleryImageVersion{
-		Location: &u.config.Location,
+		Location: &u.config.Azure.Location,
 		Properties: &armcomputev5.GalleryImageVersionProperties{
 			StorageProfile: &armcomputev5.GalleryImageVersionStorageProfile{
 				OSDiskImage: &armcomputev5.GalleryOSDiskImage{
@@ -459,10 +444,10 @@ func (u *Uploader) createImageVersion(ctx context.Context, imageID string) (stri
 }
 
 func (u *Uploader) ensureImageVersionDeleted(ctx context.Context) error {
-	rg := u.config.ResourceGroup
-	sigName := u.config.SharedImageGalleryName
-	defName := u.config.ImageDefinitionName
-	verName := u.config.ImageVersionName
+	rg := u.config.Azure.ResourceGroup
+	sigName := u.config.Azure.SharedImageGalleryName
+	defName := u.config.Azure.ImageDefinitionName
+	verName := u.config.Azure.ImageVersionName
 
 	getOpts := &armcomputev5.GalleryImageVersionsClientGetOptions{}
 	if _, err := u.imageVersions.Get(ctx, rg, sigName, defName, verName, getOpts); err != nil {
@@ -487,11 +472,11 @@ func (u *Uploader) ensureImageVersionDeleted(ctx context.Context) error {
 // If the shared image gallery is a community gallery, the community identifier is returned.
 // Otherwise, the unshared identifier is returned.
 func (u *Uploader) getImageReference(ctx context.Context, unsharedID string) (string, error) {
-	rg := u.config.ResourceGroup
-	location := u.config.Location
-	sigName := u.config.SharedImageGalleryName
-	defName := u.config.ImageDefinitionName
-	verName := u.config.ImageVersionName
+	rg := u.config.Azure.ResourceGroup
+	location := u.config.Azure.Location
+	sigName := u.config.Azure.SharedImageGalleryName
+	defName := u.config.Azure.ImageDefinitionName
+	verName := u.config.Azure.ImageVersionName
 
 	galleryResp, err := u.galleries.Get(ctx, rg, sigName, &armcomputev5.GalleriesClientGetOptions{})
 	if err != nil {

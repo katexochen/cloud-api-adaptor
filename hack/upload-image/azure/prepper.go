@@ -15,7 +15,7 @@ func (p *Prepper) Prepare(ctx context.Context, imagePath string) (string, error)
 	// or operate on a copy.
 	cmd := exec.CommandContext(ctx,
 		"truncate",
-		"--size", "1MiB",
+		"--size", "%1MiB",
 		imagePath,
 	)
 	cmd.Stderr = os.Stderr
