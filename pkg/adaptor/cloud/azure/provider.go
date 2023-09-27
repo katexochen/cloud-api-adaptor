@@ -419,7 +419,8 @@ func (p *azureProvider) getVMParameters(instanceSize, diskName, b64EncData strin
 		securityProfile = &armcompute.SecurityProfile{
 			SecurityType: to.Ptr(armcompute.SecurityTypesConfidentialVM),
 			UefiSettings: &armcompute.UefiSettings{
-				SecureBootEnabled: to.Ptr(true),
+				// Turn off, we want to do measured boot. Secure boot brings no additional security.s
+				SecureBootEnabled: to.Ptr(false),
 				VTpmEnabled:       to.Ptr(true),
 			},
 		}
