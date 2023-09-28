@@ -33,7 +33,7 @@ podvm/files/etc/certificates/*
 # Files
 vcenter.auto.pkrvars.hcl
 settings.auto.pkrvars.hcl
-upload-image.yml
+uplosi.yml
 *.qcow2
 .git-commit
 .git-commit.tmp
