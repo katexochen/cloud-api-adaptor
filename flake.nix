@@ -34,6 +34,7 @@
               rpm
               squashfsTools
               util-linux
+              zstd
             ];
           };
         };
