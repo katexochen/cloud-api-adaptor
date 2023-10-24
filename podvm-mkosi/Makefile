@@ -1,4 +1,9 @@
+.DEFAULT_GOAL := all
+PHONY: all
 all: fedora-binaries-builder binaries image
+
+PHONY: debug
+debug: fedora-binaries-builder binaries image-debug
 
 PHONY: fedora-binaries-builder
 fedora-binaries-builder:
@@ -12,12 +17,13 @@ PHONY: binaries
 binaries:
 	docker buildx use default
 	@echo "Building binaries..."
+	rm -rf ./resources/binaries-tree
 	docker buildx build \
 		--build-arg BUILDER_IMG=fedora-binaries-builder \
 		-o type=local,dest="./resources/binaries-tree" \
 		- < ../podvm/Dockerfile.podvm_binaries.fedora
 
-define build-image =
+define build-image
 docker buildx use default
 @echo "Building mkosi-builder..."
 docker buildx build \
@@ -27,24 +33,25 @@ docker buildx build \
 	.
 rm -rf ./build
 mkdir -p build
-@echo "Building image..."
+@echo "Building $(1) image..."
 docker run \
 	--rm \
 	--privileged \
 	-v $(PWD)/build:/mkosi/build \
 	mkosi-builder \
-	mkosi
+	mkosi \
+	--environment=VARIANT_ID=$(1)
 endef
 
 PHONY: image
 image:
 	@echo "Enabling production preset..."
 	rm -rf resources/buildDebugImage
-	$(build-image)
+	$(call build-image,production)
 
 
 PHONY: image-debug
 image-debug:
 	@echo "Enabling debug preset..."
 	touch resources/buildDebugImage
-	$(build-image)
+	$(call build-image,debug)
