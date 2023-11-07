@@ -16,3 +16,12 @@ mv "${BUILDROOT}/etc/issue.d" "${BUILDROOT}/usr/lib/issue.d" || true
 # remove unused units of legacy image
 rm "${BUILDROOT}"/etc/systemd/system/{run-image,run-kata\x2dcontainers}.mount
 rm "${BUILDROOT}"/etc/systemd/system/multi-user.target.wants/{run-image,run-kata\x2dcontainers}.mount
+
+# mask unwanted sytemd units that measure a bunch of stuff into the vTPM
+ln -s /dev/null "${BUILDROOT}/etc/systemd/system/systemd-pcrmachine.service"
+ln -s /dev/null "${BUILDROOT}/etc/systemd/system/systemd-pcrfs-root.service"
+ln -s /dev/null "${BUILDROOT}/etc/systemd/system/systemd-pcrfs@.service"
+ln -s /dev/null "${BUILDROOT}/etc/systemd/system/systemd-pcrphase@.service"
+ln -s /dev/null "${BUILDROOT}/etc/systemd/system/systemd-pcrphase-initrd.service"
+ln -s /dev/null "${BUILDROOT}/etc/systemd/system/systemd-pcrphase-sysinit.service"
+ln -s /dev/null "${BUILDROOT}/etc/systemd/system/systemd-pcrphase.service"
