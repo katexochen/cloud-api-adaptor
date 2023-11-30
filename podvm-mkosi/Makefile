@@ -12,6 +12,9 @@ fedora-binaries-builder:
 	@echo "Building fedora-binaries-builder image..."
 	docker buildx build \
 		-t fedora-binaries-builder \
+		--build-arg CAA_SRC=https://github.com/katexochen/cloud-api-adaptor \
+		--build-arg CAA_SRC_REF=feat/mkosi-dmverity-nix \
+		--no-cache \
 		--load \
 		- < ../podvm/Dockerfile.podvm_builder.fedora
 
@@ -23,6 +26,7 @@ binaries:
 	docker buildx build \
 		--build-arg BUILDER_IMG=fedora-binaries-builder \
 		--build-arg AA_KBC=$(AA_KBC) \
+		--no-cache \
 		-o type=local,dest="./resources/binaries-tree" \
 		- < ../podvm/Dockerfile.podvm_binaries.fedora
 
