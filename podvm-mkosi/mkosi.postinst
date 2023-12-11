@@ -12,3 +12,7 @@ mv "${BUILDROOT}/etc/issue.d" "${BUILDROOT}/usr/lib/issue.d" || true
   echo "IMAGE_VERSION=\"${IMAGE_VERSION-v0.0.0}\""
   echo "VARIANT_ID=\"${VARIANT_ID}\""
 } >> "${BUILDROOT}/etc/os-release"
+
+# remove unused units of legacy image
+rm "${BUILDROOT}"/etc/systemd/system/{run-image,run-kata\x2dcontainers}.mount
+rm "${BUILDROOT}"/etc/systemd/system/multi-user.target.wants/{run-image,run-kata\x2dcontainers}.mount
