@@ -33,6 +33,7 @@
               mtools
               rpm
               squashfsTools
+              uplosi
               util-linux
               zstd
               e2fsprogs # remove when switching to squashFS
